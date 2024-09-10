@@ -1,15 +1,10 @@
 name: CI Pipeline
 
 on:
-  # Trigger lint and build on each push to any branch
+  # Trigger all jobs on each push
   push:
     branches:
       - '**'
-  # Trigger audit only when there is a push to main or release (usually after a merge)
-  push:
-    branches:
-      - main
-      - release
 
 jobs:
   # Lint job that runs on each push to any branch
@@ -48,7 +43,7 @@ jobs:
   audit:
     name: Audit
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/release')
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
