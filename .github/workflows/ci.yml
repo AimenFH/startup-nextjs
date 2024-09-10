@@ -1,11 +1,11 @@
 name: CI Pipeline
 
 on:
-  # Trigger lint and build on every push to any branch
+  # Trigger lint and build on each push to any branch
   push:
     branches:
       - '**'
-  # Trigger audit only when there is a push to main or release (which happens after a merge)
+  # Trigger audit only when there is a push to main or release (usually after a merge)
   push:
     branches:
       - main
