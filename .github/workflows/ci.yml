@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - '**'
-  # Trigger audit only when there is a push to main or release (usually after a merge)
+  # Trigger audit only when there is a push to main or release (which happens after a merge)
   push:
     branches:
       - main
@@ -48,8 +48,7 @@ jobs:
   audit:
     name: Audit
     runs-on: ubuntu-latest
-    # Ensure this runs only on pushes to main or release
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release'
+    if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/release')
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
