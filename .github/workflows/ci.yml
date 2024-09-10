@@ -1,0 +1,62 @@
+name: CI Pipeline
+
+on:
+  # Trigger lint and build on every push to any branch
+  push:
+    branches:
+      - '**'
+  # Trigger audit only when there is a pull request to main or release
+  pull_request:
+    branches:
+      - main
+      - release
+
+jobs:
+  # Lint job that runs on each push
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm install
+      - name: Run linter
+        run: npm run lint
+
+  # Build job that runs on each push
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm install
+      - name: Build the app
+        run: npm run build
+
+  # Audit job that runs only when merging to main or release
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm install
+      - name: Run npm audit
+        run: npm audit --production
