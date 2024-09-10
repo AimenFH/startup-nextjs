@@ -1,10 +1,17 @@
 name: CI Pipeline
 
 on:
-  # Trigger all jobs on each push
+  # Trigger lint and build on each push to any branch
   push:
     branches:
       - '**'
+  # Trigger audit when a pull request is merged into main or release
+  pull_request:
+    branches:
+      - main
+      - release
+    types:
+      - closed
 
 jobs:
   # Lint job that runs on each push to any branch
@@ -39,11 +46,11 @@ jobs:
       - name: Build the app
         run: npm run build
 
-  # Audit job that runs only when there is a push to main or release after a merge
+  # Audit job that runs only when a pull request is merged into main or release
   audit:
     name: Audit
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release'
+    if: github.event.pull_request.merged == true
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
