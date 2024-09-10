@@ -5,14 +5,14 @@ on:
   push:
     branches:
       - '**'
-  # Trigger audit only when there is a pull request to main or release
-  pull_request:
+  # Trigger audit only when there is a push to main or release (usually after a merge)
+  push:
     branches:
       - main
       - release
 
 jobs:
-  # Lint job that runs on each push
+  # Lint job that runs on each push to any branch
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -28,7 +28,7 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-  # Build job that runs on each push
+  # Build job that runs on each push to any branch
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -44,11 +44,12 @@ jobs:
       - name: Build the app
         run: npm run build
 
-  # Audit job that runs only when merging to main or release
+  # Audit job that runs only when there is a push to main or release after a merge
   audit:
     name: Audit
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release')
+    # Ensure this runs only on pushes to main or release
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
