@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   description: "This is Error Page for Startup Nextjs Template",
   // other metadata
 };
-
 const ErrorPage = () => {
    return (
     <>
