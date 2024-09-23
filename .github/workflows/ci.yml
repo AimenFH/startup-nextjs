@@ -95,34 +95,37 @@ jobs:
           docker tag aimendoc/my-startup-nextjs:${{ github.sha }} aimendoc/my-startup-nextjs:latest
           docker push aimendoc/my-startup-nextjs:latest
 
-  # Deploy and scale the application using Kubernetes
-  deploy:
-    name: Deploy to Kubernetes Cluster and Scale
-    runs-on: ubuntu-latest
-    needs: docker  # Ensure Docker push job completes before deploying
-    steps:
-      # Step 1: Install kubectl
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v1
-        with:
-          version: 'latest'
+deploy:
+  name: Deploy to Kubernetes Cluster and Scale
+  runs-on: ubuntu-latest
+  needs: docker
+  steps:
+    # Install kubectl
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v1
+      with:
+        version: 'latest'
 
-      # Step 2: Set up Kubernetes config (assuming the kubeconfig file is available as a secret)
-      - name: Set up kubeconfig
-        run: |
-          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+    # Create .kube directory
+    - name: Create .kube directory
+      run: mkdir -p ~/.kube
 
-      # Step 3: Update Kubernetes deployment with new Docker image and ensure rolling updates
-      - name: Update Kubernetes deployment
-        run: |
-          kubectl set image deployment/my-startup-nextjs my-startup-nextjs=aimendoc/my-startup-nextjs:${{ github.sha }} --record
+    # Set up kubeconfig using GitHub secret
+    - name: Set up kubeconfig
+      run: |
+        echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
 
-      # Step 4: Scale the application (example: set replicas to 3)
-      - name: Scale Kubernetes deployment
-        run: |
-          kubectl scale deployment my-startup-nextjs --replicas=3
+    # Update Kubernetes deployment with new Docker image
+    - name: Update Kubernetes deployment
+      run: |
+        kubectl set image deployment/my-startup-nextjs my-startup-nextjs=aimendoc/my-startup-nextjs:${{ github.sha }} --record
 
-      # Step 5: Verify the rollout status
-      - name: Verify Kubernetes rollout
-        run: |
-          kubectl rollout status deployment my-startup-nextjs
+    # Scale the application to 3 replicas
+    - name: Scale Kubernetes deployment
+      run: |
+        kubectl scale deployment my-startup-nextjs --replicas=3
+
+    # Verify the Kubernetes rollout status
+    - name: Verify Kubernetes rollout
+      run: |
+        kubectl rollout status deployment my-startup-nextjs
