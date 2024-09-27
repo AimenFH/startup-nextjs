@@ -100,10 +100,15 @@ jobs:
         run: |
           echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
 
+      # Ensure the Kubernetes deployment exists or create it
+      - name: Apply Kubernetes deployment (create or update)
+        run: |
+          kubectl apply -f deployment.yaml  # Ensure you have this deployment file in your repo
+
       # Update Kubernetes deployment with new Docker image
       - name: Update Kubernetes deployment
         run: |
-          kubectl set image deployment/my-startup-nextjs my-startup-nextjs=aimendoc/my-startup-nextjs:${{ github.sha }} --record
+          kubectl set image deployment/my-startup-nextjs my-startup-nextjs=aimendoc/my-startup-nextjs:${{ github.sha }}
 
       # Scale the application to 3 replicas
       - name: Scale Kubernetes deployment
