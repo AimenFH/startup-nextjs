@@ -1,16 +1,15 @@
 name: CI Pipeline
 
-# Define when the pipeline should run
 on:
   push:
     branches:
-      - '**'  # Triggers on any push to any branch
+      - '**'
   pull_request:
     branches:
-      - main   # Triggers when a PR is opened or merged into the main branch
-      - release  # Triggers when a PR is opened or merged into the release branch
+      - main
+      - release
     types:
-      - closed  # Only trigger the pipeline when a PR is closed/merged
+      - closed
 
 jobs:
   lint:
@@ -82,42 +81,40 @@ jobs:
           docker push aimendoc/my-startup-nextjs:latest
 
   deploy:
-  name: Deploy to Local Kubernetes Cluster
-  runs-on: ubuntu-latest
-  needs: docker  # Ensure the Docker job is completed before deploying
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v3  # This checks out the repository code
+    name: Deploy to Local Kubernetes Cluster
+    runs-on: ubuntu-latest
+    needs: docker  # Ensure the Docker job is completed before deploying
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3  # Checkout the repository code
 
-    - name: Install kubectl
-      uses: azure/setup-kubectl@v1
-      with:
-        version: 'latest'
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v1
+        with:
+          version: 'latest'
 
-    # Debug step to list all files in the runner's working directory
-    - name: List files in the working directory
-      run: ls -R
+      # Debug step to list all files in the runner's working directory
+      - name: List files in the working directory
+        run: ls -R
 
-    # Create .kube directory and set the kubeconfig file
-    - name: Create .kube directory
-      run: mkdir -p /home/runner/.kube  # Ensure the .kube directory exists
+      # Create .kube directory and set the kubeconfig file
+      - name: Create .kube directory
+        run: mkdir -p /home/runner/.kube  # Ensure the .kube directory exists
 
-    # Set up kubeconfig using the secret
-    - name: Set up kubeconfig
-      run: echo "${{ secrets.KUBECONFIG }}" > /home/runner/.kube/config  # Use the KUBECONFIG secret
+      # Set up kubeconfig using the secret
+      - name: Set up kubeconfig
+        run: echo "${{ secrets.KUBECONFIG }}" > /home/runner/.kube/config  # Use the KUBECONFIG secret
 
-    # Test connection to the Kubernetes cluster
-    - name: Test Kubernetes connection
-      run: kubectl get nodes
+      # Test connection to the Kubernetes cluster
+      - name: Test Kubernetes connection
+        run: kubectl get nodes
 
-    # Apply the deployment and service YAML to Kubernetes
-    - name: Deploy to Kubernetes
-      run: |
-        kubectl apply -f k8s/deployment.yaml  # Correct path to deployment.yaml
-        kubectl apply -f k8s/service.yaml     # Correct path to service.yaml
+      # Apply the deployment and service YAML to Kubernetes
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/deployment.yaml  # Correct path to deployment.yaml
+          kubectl apply -f k8s/service.yaml     # Correct path to service.yaml
 
-    # Verify the deployment rollout
-    - name: Verify deployment rollout
-      run: kubectl rollout status deployment/my-startup-nextjs-deployment
-
-
+      # Verify the deployment rollout
+      - name: Verify deployment rollout
+        run: kubectl rollout status deployment/my-startup-nextjs-deployment
