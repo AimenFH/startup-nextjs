@@ -6,7 +6,7 @@ on:
       - '**'
   pull_request:
     branches:
-      - main
+      - main  # Trigger for main branch
       - release
     types:
       - closed
@@ -81,41 +81,26 @@ jobs:
           docker push aimendoc/my-startup-nextjs:latest
 
   deploy:
-    name: Deploy to Kubernetes Cluster and Scale
+    name: Deploy to Local Kubernetes Cluster
     runs-on: ubuntu-latest
-    needs: docker
+    needs: docker  # Ensure the Docker job is completed before deploying
     steps:
-      # Install kubectl
       - name: Install kubectl
         uses: azure/setup-kubectl@v1
         with:
           version: 'latest'
 
-      # Create .kube directory
       - name: Create .kube directory
         run: mkdir -p ~/.kube
 
-      # Set up kubeconfig using GitHub secret
-      - name: Set up kubeconfig
+      - name: Set up kubeconfig for Docker Desktop Kubernetes
         run: |
           echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
 
-      # Ensure the Kubernetes deployment exists or create it
-      - name: Apply Kubernetes deployment (create or update)
+      - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f deployment.yaml  # Ensure you have this deployment file in your repo
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
 
-      # Update Kubernetes deployment with new Docker image
-      - name: Update Kubernetes deployment
-        run: |
-          kubectl set image deployment/my-startup-nextjs my-startup-nextjs=aimendoc/my-startup-nextjs:${{ github.sha }}
-
-      # Scale the application to 3 replicas
-      - name: Scale Kubernetes deployment
-        run: |
-          kubectl scale deployment my-startup-nextjs --replicas=3
-
-      # Verify the Kubernetes rollout status
-      - name: Verify Kubernetes rollout
-        run: |
-          kubectl rollout status deployment my-startup-nextjs
+      - name: Verify deployment
+        run: kubectl rollout status deployment/my-startup-nextjs-deployment
