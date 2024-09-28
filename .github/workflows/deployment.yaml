@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-startup-nextjs-deployment
+spec:
+  replicas: 3  # Number of replicas for scaling
+  selector:
+    matchLabels:
+      app: my-startup-nextjs
+  template:
+    metadata:
+      labels:
+        app: my-startup-nextjs
+    spec:
+      containers:
+        - name: my-startup-nextjs
+          image: aimendoc/my-startup-nextjs:latest  # Docker image from Docker Hub
+          ports:
+            - containerPort: 3000  # App's internal port
+          livenessProbe:  # Ensures the app is running
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:  # Ensures the app is ready to serve traffic
+            httpGet:
+              path: /ready
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
