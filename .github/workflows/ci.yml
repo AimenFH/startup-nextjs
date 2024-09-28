@@ -1,15 +1,16 @@
 name: CI Pipeline
 
+# Define when the pipeline should run
 on:
   push:
     branches:
-      - '**'
+      - '**'  # Triggers on any push to any branch
   pull_request:
     branches:
-      - main  # Trigger for main branch
-      - release
+      - main   # Triggers when a PR is opened or merged into the main branch
+      - release  # Triggers when a PR is opened or merged into the release branch
     types:
-      - closed
+      - closed  # Only trigger the pipeline when a PR is closed/merged
 
 jobs:
   lint:
@@ -90,17 +91,24 @@ jobs:
         with:
           version: 'latest'
 
+      # Create .kube directory and set the kubeconfig file
       - name: Create .kube directory
-        run: mkdir -p ~/.kube
+        run: mkdir -p /home/runner/.kube  # Explicitly create the .kube directory
 
-      - name: Set up kubeconfig for Docker Desktop Kubernetes
-        run: |
-          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+      # Add the kubeconfig from GitHub Secrets to the config file
+      - name: Set up kubeconfig
+        run: echo "${{ secrets.KUBECONFIG }}" > /home/runner/.kube/config  # Write the KUBECONFIG secret to the kubeconfig file
 
+      # Verify kubeconfig content and ensure it's correctly set up
+      - name: Verify kubeconfig
+        run: kubectl config view
+
+      # Apply deployment and service YAML to the Kubernetes cluster
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
 
+      # Verify the deployment status
       - name: Verify deployment
         run: kubectl rollout status deployment/my-startup-nextjs-deployment
