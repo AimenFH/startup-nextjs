@@ -106,8 +106,8 @@ jobs:
       # Apply deployment and service YAML to the Kubernetes cluster
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f H:\Git\startup-nextjs\k8s\deployment.yaml
-          kubectl apply -f H:\Git\startup-nextjs\k8s\service.yaml 
+          kubectl apply -f /home/runner/work/startup-nextjs/k8s/deployment.yaml
+          kubectl apply -f /home/runner/work/startup-nextjs/k8s/service.yaml 
 
       # Verify the deployment status
       - name: Verify deployment
