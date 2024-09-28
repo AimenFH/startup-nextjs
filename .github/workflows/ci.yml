@@ -106,8 +106,8 @@ jobs:
       # Apply deployment and service YAML to the Kubernetes cluster
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f deployment.yaml
-          kubectl apply -f service.yaml
+          kubectl apply -f .github/workflows/deployment.yaml
+          kubectl apply -f .github/workflows/service.yaml 
 
       # Verify the deployment status
       - name: Verify deployment
