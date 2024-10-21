@@ -59,3 +59,9 @@ Startup is 100% free and open-source, feel free to use with your personal and co
 If you like the template, please star this repository to inspire the team to create more stuff like this and reach more users like you!
 
 ### ✨ Explore and Download - Free [Next.js Templates](https://nextjstemplates.com)
+Deployment Description:
+
+service.yaml: This file defines the service that exposes your application. It specifies the service type, ports, and the target selectors, ensuring that the application is accessible to users.
+deployment.yaml: This file describes the deployment configuration. It includes the desired number of replicas, the container image, resource limits, and any necessary environment variables. The deployment ensures that your application is running in a controlled and scalable manner.
+ci.yml: This file sets up a continuous integration (CI) workflow, automating the process of testing and deploying your application using tools like Terraform and Azure CLI.
+
