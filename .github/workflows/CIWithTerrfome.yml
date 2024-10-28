@@ -1,0 +1,124 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - release
+    types:
+      - closed
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm install
+      - name: Run linter
+        run: npm run lint
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm install
+      - name: Build the app
+        run: npm run build
+
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm install
+      - name: Run npm audit
+        run: npm audit --production
+
+  docker:
+    name: Build and Push Docker Image to Docker Hub
+    runs-on: ubuntu-latest
+    needs: audit  # Ensure audit job completes before Docker push
+    if: github.event.pull_request.merged == true && github.ref == 'refs/heads/release'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: aimendoc
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Build Docker image
+        run: docker build -t aimendoc/my-startup-nextjs:${{ github.sha }} .
+      - name: Push Docker image to Docker Hub
+        run: docker push aimendoc/my-startup-nextjs:${{ github.sha }}
+      - name: Tag Docker image as latest
+        run: |
+          docker tag aimendoc/my-startup-nextjs:${{ github.sha }} aimendoc/my-startup-nextjs:latest
+          docker push aimendoc/my-startup-nextjs:latest
+
+  terraform:
+    name: Terraform Apply for Infrastructure in Azure
+    runs-on: ubuntu-latest
+    needs: docker  # Run Terraform after Docker image is pushed
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+      - name: Initialize Terraform
+        run: terraform init
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  print_deployment:
+    name: Print Manual Deployment Instructions
+    runs-on: ubuntu-latest
+    needs: terraform
+    steps:
+      - name: Display deployment instructions
+        run: |
+          echo "The Docker image has been pushed to Docker Hub."
+          echo "Terraform has applied the infrastructure in Azure."
+          echo ""
+          echo "If you need to deploy the app manually in Kubernetes, use the following commands:"
+          echo ""
+          echo "kubectl apply -f k8s/deployment.yaml"
+          echo "kubectl apply -f k8s/service.yaml"
